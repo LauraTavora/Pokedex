@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Pokedex - Mobile</string>
+    <string name="open_drawer">Abrir menu</string>
+    <string name="close_drawer">Fechar menu</string>
 </resources>

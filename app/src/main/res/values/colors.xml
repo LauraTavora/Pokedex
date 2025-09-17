@@ -1,5 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="type_grass">#4DD6A0</color>
+    <color name="type_poison">#9C5BC9</color>
+    <color name="type_fire">#F77C7C</color>
+    <color name="type_water">#76BDFE</color>
+    <color name="type_flying">#9CA0FF</color>
+    <color name="type_bug">#C6D17B</color>
+    <color name="type_normal">#CFCFCF</color>
+    <color name="type_psychic">#FF80AB</color>
+    <color name="type_rock">#B8A038</color>
+    <color name="type_ground">#927D44</color>
+    <color name="type_electric">#FFD966</color>
+    <color name="type_ghost">#705898</color>
+
+    <!-- fallback -->
+    <color name="type_default">#EFEFEF</color>
+    <color name="white">#FFFFFF</color>"
 </resources>
