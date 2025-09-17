@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Os títulos devem coincidir com os nomes de tipo retornados pela API (em inglês). -->
+    <item android:id="@+id/type_grass" android:title="grass" />
+    <item android:id="@+id/type_poison" android:title="poison" />
+    <item android:id="@+id/type_fire" android:title="fire" />
+    <item android:id="@+id/type_flying" android:title="flying" />
+    <item android:id="@+id/type_water" android:title="water" />
+    <item android:id="@+id/type_bug" android:title="bug" />
+    <item android:id="@+id/type_normal" android:title="normal" />
+    <item android:id="@+id/type_psychic" android:title="psychic" />
+    <item android:id="@+id/type_rock" android:title="rock" />
+    <item android:id="@+id/type_ground" android:title="ground" />
+    <item android:id="@+id/type_electric" android:title="electric" />
+    <item android:id="@+id/type_ghost" android:title="ghost" />
+</menu>
