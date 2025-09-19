@@ -1,4 +1,8 @@
 <resources>
+    <color name="text_primary">#222222</color>
+    <color name="text_on_card">#FFFFFFFF</color>
+
+    <!-- Paleta por tipo -->
     <color name="type_grass">#4DD6A0</color>
     <color name="type_poison">#9C5BC9</color>
     <color name="type_fire">#F77C7C</color>
@@ -11,8 +15,5 @@
     <color name="type_ground">#927D44</color>
     <color name="type_electric">#FFD966</color>
     <color name="type_ghost">#705898</color>
-
-    <!-- fallback -->
-    <color name="type_default">#EFEFEF</color>
-    <color name="white">#FFFFFF</color>"
+    <color name="type_fairy">#FFBED2</color>
 </resources>

@@ -5,6 +5,7 @@ plugins {
 android {
     namespace = "com.example.pokedex_mobile"
     compileSdk = 36
+    buildFeatures { viewBinding; true }
 
     defaultConfig {
         applicationId = "com.example.pokedex_mobile"
@@ -41,17 +42,18 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    // Retrofit para requisições
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    implementation ("androidx.core:core-ktx:1.13.1")
+    implementation ("androidx.appcompat:appcompat:1.7.0")
+    implementation ("com.google.android.material:material:1.12.0")
+    implementation ("androidx.recyclerview:recyclerview:1.3.2")
+    implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // Retrofit + Gson
+    implementation ("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.11.0")
 
     // Glide para imagens
     implementation ("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
-
-    // RecyclerView
-    implementation ("androidx.recyclerview:recyclerview:1.3.1")
-
-    // Material Design (para UI moderna)
-    implementation ("com.google.android.material:material:1.9.0")
 }

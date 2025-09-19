@@ -1,116 +1,130 @@
 package com.example.pokedex_mobile.ui;
 
-
-import android.content.Intent;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageButton;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.example.pokedex_mobile.R;
-import com.example.pokedex_mobile.model.Pokemon;
+import com.example.pokedex_mobile.data.mapper.PokemonMapper;
+import com.example.pokedex_mobile.dataRemote.RetrofitProvider;
+import com.example.pokedex_mobile.dataRemote.model.PokemonDetailClass;
+import com.example.pokedex_mobile.domain.PokemonUi;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.Executors;
+
+import retrofit2.Response;
 
 public class PokemonDetailActivity extends AppCompatActivity {
 
-    public static final String EXTRA_POKEMON_INDEX = "extra_pokemon_index";
-    public static final String EXTRA_POKEMON_LIST = "extra_pokemon_list";
-
-    private ImageView imageView;
-    private TextView nameView, typesView, statsView;
-    private ImageButton prevBtn, nextBtn;
-    private ArrayList<Pokemon> pokemons;
-    private int index;
+    private View overlay;
+    private View card;
+    private ImageView ivBig;
+    private TextView tvTitle;
+    private TextView tvMainType;
+    private LinearLayout stats;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        // tema com fundo translúcido
+        setTheme(R.style.Theme_PokedexMobile_Transparent);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pokemon_detail);
 
-        imageView = findViewById(R.id.detailImage);
-        nameView = findViewById(R.id.detailName);
-        typesView = findViewById(R.id.detailTypes);
-        statsView = findViewById(R.id.detailStats);
-        prevBtn = findViewById(R.id.buttonPrev);
-        nextBtn = findViewById(R.id.buttonNext);
+        // Views
+        overlay   = findViewById(R.id.overlay);
+        card      = findViewById(R.id.card);
+        ivBig     = findViewById(R.id.ivBig);
+        tvTitle   = findViewById(R.id.tvTitle);
+        tvMainType= findViewById(R.id.tvMainType);
+        stats     = findViewById(R.id.stats);
 
-        Intent it = getIntent();
-        index = it.getIntExtra(EXTRA_POKEMON_INDEX, 0);
-        pokemons = (ArrayList<Pokemon>) it.getSerializableExtra(EXTRA_POKEMON_LIST);
+        String idOrName = getIntent().getStringExtra("idOrName");
+        if (idOrName == null) { finish(); return; }
 
-        if (pokemons == null) pokemons = new ArrayList<>();
+        // Busca detalhe em background
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                Response<PokemonDetailClass> resp =
+                        RetrofitProvider.getApi().detail(idOrName).execute();
+                if (!resp.isSuccessful() || resp.body() == null) {
+                    throw new IOException("Erro ao carregar detalhes");
+                }
 
-        showPokemon(index);
+                final PokemonUi p = PokemonMapper.toUi(resp.body());
+                final int color = TypeColors.bgFor(p.typesPt, this);
 
-        prevBtn.setOnClickListener(v -> {
-            if (index > 0) {
-                index--;
-                showPokemon(index);
+                runOnUiThread(() -> {
+                    // Preenche UI
+                    Glide.with(this).load(p.imageUrl).into(ivBig);
+                    tvTitle.setText(p.name);
+                    tvMainType.setText(p.typesPt.isEmpty() ? "—" : p.typesPt.get(0));
+
+                    // Cor de fundo do card (pode usar shape bg_card_round.xml)
+                    if (card.getBackground() != null) {
+                        card.getBackground().setTint(color);
+                    }
+
+                    // Monta as linhas de stats
+                    stats.removeAllViews();
+                    for (Map.Entry<String, Integer> e : p.stats.entrySet()) {
+                        stats.addView(buildStatRow(e.getKey(), e.getValue(), color));
+                    }
+
+                    // Clique fora fecha; clique no card não propaga
+                    overlay.setOnClickListener(v -> finish());
+                    card.setOnClickListener(v -> { /* consume */ });
+                    // (Opcional) impedir clique atravessar o card:
+                    ViewGroup parent = (ViewGroup) card.getParent();
+                    if (parent != null) parent.setOnClickListener(v -> {});
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(this::finish);
             }
         });
-
-        nextBtn.setOnClickListener(v -> {
-            if (index < pokemons.size() - 1) {
-                index++;
-                showPokemon(index);
-            }
-        });
     }
 
-    private void showPokemon(int idx) {
-        Pokemon p = pokemons.get(idx);
-        nameView.setText(capitalize(p.name));
-        // tipos
-        StringBuilder typesSb = new StringBuilder();
-        if (p.types != null) {
-            for (int i = 0; i < p.types.size(); i++) {
-                typesSb.append(capitalize(p.types.get(i).type.name));
-                if (i < p.types.size() - 1) typesSb.append(" · ");
-            }
-        }
-        typesView.setText(typesSb.toString());
+    private LinearLayout buildStatRow(String label, int value, int color) {
+        final int pad = (int) (getResources().getDisplayMetrics().density * 10);
 
-        // stats: formatado
-        StringBuilder statsSb = new StringBuilder();
-        if (p.stats != null) {
-            for (Pokemon.StatWrapper sw : p.stats) {
-                statsSb.append(statShortName(sw.stat.name)).append(": ").append(sw.base_stat).append("\n");
-            }
-        }
-        statsView.setText(statsSb.toString());
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.HORIZONTAL);
+        root.setPadding(0, pad, 0, pad);
 
-        if (p.sprites != null && p.sprites.front_default != null) {
-            Glide.with(this)
-                    .load(p.sprites.front_default)
-                    .into(imageView);
-        } else {
-            imageView.setImageResource(R.drawable.ic_pokeball);
-        }
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextColor(getColor(R.color.text_primary));
+        tv.setTextSize(14f);
+        tv.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        // habilitar/desabilitar botões conforme borda
-        prevBtn.setEnabled(idx > 0);
-        nextBtn.setEnabled(idx < pokemons.size() - 1);
-    }
+        ProgressBar pb = new ProgressBar(this, null,
+                android.R.attr.progressBarStyleHorizontal);
+        pb.setMax(180);
+        pb.setProgress(Math.max(0, Math.min(180, value)));
+        pb.getProgressDrawable().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+        pb.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.4f));
 
-    private String capitalize(String s) {
-        if (s == null || s.isEmpty()) return "";
-        return s.substring(0, 1).toUpperCase() + s.substring(1);
-    }
+        TextView tvVal = new TextView(this);
+        tvVal.setText(String.valueOf(value));
+        tvVal.setPadding(pad, 0, 0, 0);
 
-    private String statShortName(String stat) {
-        switch (stat) {
-            case "hp": return "HP";
-            case "attack": return "ATK";
-            case "defense": return "DEF";
-            case "special-attack": return "SPA";
-            case "special-defense": return "SPD";
-            case "speed": return "SPE";
-            default: return stat.toUpperCase();
-        }
+        root.addView(tv);
+        root.addView(pb);
+        root.addView(tvVal);
+        return root;
     }
 }

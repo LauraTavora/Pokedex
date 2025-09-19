@@ -1,195 +1,165 @@
 package com.example.pokedex_mobile.ui;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.Toast;
 
-import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
-import androidx.core.content.ContextCompat;
-import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pokedex_mobile.R;
-import com.example.pokedex_mobile.adapter.PokemonAdapter;
-import com.example.pokedex_mobile.api.ApiClient;
-import com.example.pokedex_mobile.api.PokeApiService;
-import com.example.pokedex_mobile.model.Pokemon;
-import com.example.pokedex_mobile.model.PokemonListResponse;
-import com.google.android.material.navigation.NavigationView;
+import com.example.pokedex_mobile.data.PokemonRepository;
+import com.example.pokedex_mobile.dataRemote.RetrofitProvider;
+import com.example.pokedex_mobile.domain.PokemonUi;
+import com.example.pokedex_mobile.ui.adapter.PokemonAdapter;
+import com.example.pokedex_mobile.ui.util.GridSpacingItemDecoration;
+import com.example.pokedex_mobile.ui.util.SimpleTextWatcher;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Executors;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+public class MainActivity extends AppCompatActivity {
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+    private DrawerLayout drawerLayout;
+    private ImageView ivMenu;
 
-    private DrawerLayout drawer;
-    private NavigationView navigationView;
-    private RecyclerView recyclerView;
+    private RecyclerView rv;
+    private TextInputEditText etSearch;
+    private TextInputLayout tilSearch;
+
     private PokemonAdapter adapter;
-    private List<Pokemon> pokemons = new ArrayList<>();
-    private List<Pokemon> filteredList = new ArrayList<>();
-    private ProgressBar progressBar;
-    private PokeApiService apiService;
-    private SearchView searchView;
-
-    // cores por tipo
-    private final Map<String, Integer> TYPE_COLORS = new HashMap<>();
+    private final PokemonRepository repo =
+            new PokemonRepository(RetrofitProvider.getApi());
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // mapa de cores
-        TYPE_COLORS.put("grass", ContextCompat.getColor(this, R.color.type_grass));
-        TYPE_COLORS.put("poison", ContextCompat.getColor(this, R.color.type_poison));
-        TYPE_COLORS.put("fire", ContextCompat.getColor(this, R.color.type_fire));
-        TYPE_COLORS.put("water", ContextCompat.getColor(this, R.color.type_water));
-        TYPE_COLORS.put("flying", ContextCompat.getColor(this, R.color.type_flying));
-        TYPE_COLORS.put("bug", ContextCompat.getColor(this, R.color.type_bug));
-        TYPE_COLORS.put("normal", ContextCompat.getColor(this, R.color.type_normal));
-        TYPE_COLORS.put("psychic", ContextCompat.getColor(this, R.color.type_psychic));
-        TYPE_COLORS.put("rock", ContextCompat.getColor(this, R.color.type_rock));
-        TYPE_COLORS.put("ground", ContextCompat.getColor(this, R.color.type_ground));
-        TYPE_COLORS.put("electric", ContextCompat.getColor(this, R.color.type_electric));
-        TYPE_COLORS.put("ghost", ContextCompat.getColor(this, R.color.type_ghost));
+        // ====== Views do conteúdo ======
+        drawerLayout = findViewById(R.id.drawerLayout);
+        ivMenu = findViewById(R.id.ivMenu);
 
+        rv = findViewById(R.id.rv);
+        etSearch = findViewById(R.id.etSearch);
+        tilSearch = findViewById(R.id.tilSearch);
 
-        drawer = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        // ====== RecyclerView ======
+        GridLayoutManager glm = new GridLayoutManager(this, 2);
+        rv.setLayoutManager(glm);
+        adapter = new PokemonAdapter(p -> openDetail(p.name.toLowerCase()));
+        rv.setAdapter(adapter);
 
-        // Inicializa o botão do menu customizado
-        ImageView menuButton = findViewById(R.id.menuButton);
-        menuButton.setOnClickListener(v -> drawer.openDrawer(GravityCompat.START));
+        int space = (int) (getResources().getDisplayMetrics().density * 8); // 8dp
+        rv.addItemDecoration(new GridSpacingItemDecoration(space));
 
-        recyclerView = findViewById(R.id.recyclerView);
-        progressBar = findViewById(R.id.progressBar);
-        searchView = findViewById(R.id.searchView);
+        // ====== Busca ======
+        // Em tempo real (digitando)
+        etSearch.addTextChangedListener(new SimpleTextWatcher(q -> adapter.filter(q)));
 
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        adapter = new PokemonAdapter(this, filteredList, TYPE_COLORS);
-        recyclerView.setAdapter(adapter);
-
-        apiService = ApiClient.getClient().create(PokeApiService.class);
-
-        loadPokemons(50);
-        setupSearch();
-
-        // substitui o onBackPressed antigo pelo OnBackPressedDispatcher
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                if (drawer.isDrawerOpen(GravityCompat.START)) {
-                    drawer.closeDrawer(GravityCompat.START);
-                } else {
-                    setEnabled(false);
-                    onBackPressed();
-                }
-            }
-        });
-    }
-
-    private void setupSearch() {
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override public boolean onQueryTextSubmit(String query) { return false; }
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                filterByName(newText);
+        // Ação do teclado (Enter/Buscar)
+        etSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                doSearch();
                 return true;
             }
+            return false;
+        });
+
+        // Ícone de lupa no TextInputLayout
+        tilSearch.setEndIconOnClickListener(v -> doSearch());
+
+        // ====== Menu (Drawer) ======
+        ivMenu.setOnClickListener(v -> drawerLayout.open());
+
+        // Liga os botões de tipo do drawer
+        wireDrawerTypeButtons();
+
+        // ====== Carregar os 50 primeiros ======
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                final List<PokemonUi> list = repo.loadFirst50();
+                runOnUiThread(() -> adapter.submit(list));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 
-    private void filterByName(String query) {
-        filteredList.clear();
-        if (query == null || query.trim().isEmpty()) {
-            filteredList.addAll(pokemons);
-        } else {
-            String q = query.toLowerCase();
-            for (Pokemon p : pokemons) {
-                if (p.name.toLowerCase().contains(q)) filteredList.add(p);
-            }
+    private void doSearch() {
+        String q = etSearch.getText() == null ? "" : etSearch.getText().toString();
+        adapter.filter(q);
+        hideKeyboard();
+    }
+
+    private void applyTypeFilter(String typePt) {
+        // Mostra o termo no campo (opcional) e aplica o filtro
+        if (etSearch != null) etSearch.setText(typePt);
+        adapter.filter(typePt);
+        hideKeyboard();
+        if (drawerLayout != null) drawerLayout.close();
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null && etSearch != null) {
+            imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+            etSearch.clearFocus();
         }
-        adapter.notifyDataSetChanged();
     }
 
-    private void loadPokemons(int limit) {
-        progressBar.setVisibility(View.VISIBLE);
-        apiService.getPokemonList(limit).enqueue(new Callback<PokemonListResponse>() {
-            @Override
-            public void onResponse(Call<PokemonListResponse> call, Response<PokemonListResponse> response) {
-                if (!response.isSuccessful() || response.body() == null) {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(MainActivity.this, "Erro ao obter lista", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                List<PokemonListResponse.PokemonResult> results = response.body().results;
-                AtomicInteger counter = new AtomicInteger(0);
-                int total = results.size();
-
-                for (PokemonListResponse.PokemonResult r : results) {
-                    apiService.getPokemonDetails(r.name).enqueue(new Callback<Pokemon>() {
-                        @Override
-                        public void onResponse(Call<Pokemon> call, Response<Pokemon> resp) {
-                            if (resp.isSuccessful() && resp.body() != null) {
-                                pokemons.add(resp.body());
-                                filteredList.add(resp.body());
-                                adapter.notifyItemInserted(filteredList.size() - 1);
-                            }
-                            if (counter.incrementAndGet() == total) progressBar.setVisibility(View.GONE);
-                        }
-                        @Override
-                        public void onFailure(Call<Pokemon> call, Throwable t) {
-                            if (counter.incrementAndGet() == total) progressBar.setVisibility(View.GONE);
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onFailure(Call<PokemonListResponse> call, Throwable t) {
-                progressBar.setVisibility(View.GONE);
-                Toast.makeText(MainActivity.this, "Falha: " + t.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
+    private void openDetail(String idOrName) {
+        Intent it = new Intent(this, PokemonDetailActivity.class);
+        it.putExtra("idOrName", idOrName);
+        startActivity(it);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
+    @SuppressLint("GestureBackNavigation")
     @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        drawer.closeDrawer(GravityCompat.START);
-
-        String typeToFilter = item.getTitle().toString().toLowerCase();
-
-        filteredList.clear();
-        for (Pokemon p : pokemons) {
-            if (p.types != null) {
-                for (Pokemon.TypeWrapper tw : p.types) {
-                    if (tw.type != null && tw.type.name != null &&
-                            tw.type.name.toLowerCase().equals(typeToFilter)) {
-                        filteredList.add(p);
-                        break;
-                    }
-                }
-            }
+    public void onBackPressed() {
+        if (drawerLayout != null && drawerLayout.isOpen()) {
+            drawerLayout.close();
+        } else {
+            super.onBackPressed();
         }
-        adapter.notifyDataSetChanged();
-        return true;
+    }
+
+    /**
+     * Conecta os botões do layout @layout/drawer_filter às ações de filtro.
+     * Os IDs abaixo devem existir em drawer_filter.xml. Se algum ainda não
+     * existir, o método ignora silenciosamente.
+     */
+    private void wireDrawerTypeButtons() {
+        bindTypeButton(R.id.btnTypeGrass, "Planta");
+        bindTypeButton(R.id.btnTypePoison, "Venenoso");
+        bindTypeButton(R.id.btnTypeFire, "Fogo");
+        bindTypeButton(R.id.btnTypeFlying, "Voador");
+        bindTypeButton(R.id.btnTypeWater, "Água");
+        bindTypeButton(R.id.btnTypeBug, "Inseto");
+        bindTypeButton(R.id.btnTypeNormal, "Normal");
+        bindTypeButton(R.id.btnTypePsychic, "Psíquico");
+        bindTypeButton(R.id.btnTypeRock, "Rocha");
+        bindTypeButton(R.id.btnTypeGround, "Terra");
+        bindTypeButton(R.id.btnTypeElectric, "Elétrico");
+        bindTypeButton(R.id.btnTypeGhost, "Fantasma");
+        bindTypeButton(R.id.btnTypeFairy, "Fada");
+    }
+
+    private void bindTypeButton(int viewId, String typePt) {
+        View v = findViewById(viewId);
+        if (v != null) {
+            v.setOnClickListener(x -> applyTypeFilter(typePt));
+        }
     }
 }

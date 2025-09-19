@@ -1,0 +1,13 @@
+<resources>
+    <style name="TypePill">
+        <item name="android:layout_width">200dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:background">@drawable/bg_type_pill</item>
+        <item name="android:backgroundTint">@android:color/darker_gray</item>
+        <item name="android:layout_marginTop">14dp</item>
+    </style>
+</resources>

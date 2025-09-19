@@ -1,58 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlay"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <ImageView
-        android:id="@+id/detailImage"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_gravity="center"
-        android:scaleType="centerInside"/>
-
-    <TextView
-        android:id="@+id/detailName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginTop="12dp"/>
-
-    <TextView
-        android:id="@+id/detailTypes"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"/>
-
-    <TextView
-        android:id="@+id/detailStats"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+    android:layout_height="match_parent"
+    android:background="#80000000">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/card"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:padding="22dp"
+        android:layout_width="320dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="20dp">
+        android:background="@drawable/bg_card_round">
 
-        <ImageButton
-            android:id="@+id/buttonPrev"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:src="@drawable/ic_arrow_left"
-            android:contentDescription="Anterior"/>
+        <ImageView
+            android:id="@+id/ivBig"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_gravity="center" />
 
-        <ImageButton
-            android:id="@+id/buttonNext"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:src="@drawable/ic_arrow_right"
-            android:contentDescription="Próximo"
-            android:layout_marginStart="24dp"/>
+        <!-- *** width/height adicionados *** -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Charmander"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:layout_marginTop="8dp"
+            android:layout_gravity="center"
+            android:textColor="@color/text_primary" />
+
+        <!-- *** width/height adicionados *** -->
+        <TextView
+            android:id="@+id/tvMainType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fogo"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_chip"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/stats"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
     </LinearLayout>
-
-</LinearLayout>
+</FrameLayout>
