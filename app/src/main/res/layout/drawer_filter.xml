@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawerRoot"
+    android:layout_width="300dp"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#CC000000"
+    android:paddingTop="32dp"
+    android:paddingBottom="24dp">
+
+    <!-- LOGO -->
+    <ImageView
+        android:id="@+id/ivPokemonLogo"
+        android:layout_width="187dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_pokemon_logo" />
+
+    <!-- divisor fininho -->
+    <View
+        android:layout_width="200dp"
+        android:layout_height="1dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:background="#29FFFFFF"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="20dp">
+
+        <LinearLayout
+            android:id="@+id/typesContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingHorizontal="20dp">
+
+            <!-- Cada “pill” é um TextView com bg arredondado e tintado -->
+            <TextView
+                android:id="@+id/btnTypeGrass"
+                style="@style/TypePill"
+                android:text="Planta"
+                android:backgroundTint="@color/type_grass"/>
+
+            <TextView
+                android:id="@+id/btnTypePoison"
+                style="@style/TypePill"
+                android:text="Venenoso"
+                android:backgroundTint="@color/type_poison"/>
+
+            <TextView
+                android:id="@+id/btnTypeFire"
+                style="@style/TypePill"
+                android:text="Fogo"
+                android:backgroundTint="@color/type_fire"/>
+
+            <TextView
+                android:id="@+id/btnTypeFlying"
+                style="@style/TypePill"
+                android:text="Voador"
+                android:backgroundTint="@color/type_flying"/>
+
+            <TextView
+                android:id="@+id/btnTypeWater"
+                style="@style/TypePill"
+                android:text="Água"
+                android:backgroundTint="@color/type_water"/>
+
+            <TextView
+                android:id="@+id/btnTypeBug"
+                style="@style/TypePill"
+                android:text="Inseto"
+                android:backgroundTint="@color/type_bug"/>
+
+            <TextView
+                android:id="@+id/btnTypeNormal"
+                style="@style/TypePill"
+                android:text="Normal"
+                android:backgroundTint="@color/type_normal"/>
+
+            <TextView
+                android:id="@+id/btnTypePsychic"
+                style="@style/TypePill"
+                android:text="Psíquico"
+                android:backgroundTint="@color/type_psychic"/>
+
+            <TextView
+                android:id="@+id/btnTypeRock"
+                style="@style/TypePill"
+                android:text="Rocha"
+                android:backgroundTint="@color/type_rock"/>
+
+            <TextView
+                android:id="@+id/btnTypeGround"
+                style="@style/TypePill"
+                android:text="Terra"
+                android:backgroundTint="@color/type_ground"/>
+
+            <TextView
+                android:id="@+id/btnTypeElectric"
+                style="@style/TypePill"
+                android:text="Elétrico"
+                android:backgroundTint="@color/type_electric"/>
+
+            <TextView
+                android:id="@+id/btnTypeGhost"
+                style="@style/TypePill"
+                android:text="Fantasma"
+                android:backgroundTint="@color/type_ghost"/>
+
+            <!-- NOVO: FADA -->
+            <TextView
+                android:id="@+id/btnTypeFairy"
+                style="@style/TypePill"
+                android:text="Fada"
+                android:backgroundTint="@color/type_fairy"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

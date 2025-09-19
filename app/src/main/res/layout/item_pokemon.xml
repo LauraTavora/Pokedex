@@ -1,43 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/cardView"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="160dp"
-    android:layout_margin="8dp"
-    card_view:cardCornerRadius="18dp"
-    card_view:cardElevation="6dp">
+    android:layout_height="118dp"
+    android:layout_margin="0dp"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="0dp">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="12dp">
+    <androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/pokemonName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Pikachu"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"/>
+    <!-- Fundo por tipo -->
+    <View
+        android:id="@+id/bgColor"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <TextView
-            android:id="@+id/pokemonTypes"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/pokemonName"
-            android:layout_marginTop="6dp"
-            android:text="Elétrico"
-            android:textSize="12sp"
-            android:textColor="@android:color/white"/>
+    <!-- Guideline separando texto (esq) e ilustração (dir).
+         Aumentei para 60% para dar MAIS largura à área de texto,
+         o que visualmente deixa o card parecer mais largo. -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideRight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.60" />
 
+        <!-- 🔹 Pokébola no canto inferior direito (atrás do sprite) -->
         <ImageView
-            android:id="@+id/pokemonImage"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:layout_centerInParent="true"
-            android:scaleType="centerInside"/>
-    </RelativeLayout>
-</androidx.cardview.widget.CardView>
+            android:id="@+id/bgPokeballCard"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/ic_background_pokeball"
+            android:scaleType="fitCenter"
+            android:alpha="0.13"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginEnd="-30dp"
+            android:layout_marginBottom="-30dp"
+            android:contentDescription="@null"
+            android:clickable="false"
+            android:focusable="false"/>
+
+    <!-- Nome -->
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="12dp"
+        android:text="Bulbasaur"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/guideRight" />
+
+    <!-- Chips empilhados -->
+    <LinearLayout
+        android:id="@+id/chips"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="6dp"
+        app:layout_constraintTop_toBottomOf="@id/tvName"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Sprite MENOR e bem no canto -->
+    <ImageView
+        android:id="@+id/ivSprite"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="centerInside"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="2dp" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
