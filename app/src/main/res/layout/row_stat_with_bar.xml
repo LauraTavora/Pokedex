@@ -1,0 +1,41 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <!-- Label ganha mais peso e mínimo de largura -->
+    <TextView
+        android:id="@+id/tvLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.8"
+        android:minEms="10"
+        android:maxLines="1"
+        android:text="Velocidade"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary" />
+
+    <!-- Barra com peso um pouco menor -->
+    <ProgressBar
+        android:id="@+id/pbStat"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="0dp"
+        android:layout_height="10dp"
+        android:layout_weight="1.5"
+        android:max="200" />
+
+    <!-- Valor com largura mínima e alinhado -->
+    <TextView
+        android:id="@+id/tvValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="36dp"
+        android:gravity="end"
+        android:paddingStart="8dp"
+        android:text="0"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary" />
+</LinearLayout>

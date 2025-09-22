@@ -2,4 +2,19 @@
     <string name="app_name">Pokedex</string>
     <string name="menu">Menu</string>
     <string name="search_hint">Pesquisar</string>
+
+    <string name="close">Fechar</string>
+    <string name="previous">Anterior</string>
+    <string name="next">Próximo</string>
+
+    <string name="tab_stats">Stats</string>
+    <string name="tab_habilities">Habilities</string>
+    <string name="tab_evolutions">Evolutions</string>
+
+    <string name="stat_hp">Vida</string>
+    <string name="stat_attack">Ataque</string>
+    <string name="stat_defense">Defesa</string>
+    <string name="stat_sp_atk">Atq. Esp.</string>
+    <string name="stat_sp_def">Def. Esp.</string>
+    <string name="stat_speed">Velocidade</string>
 </resources>

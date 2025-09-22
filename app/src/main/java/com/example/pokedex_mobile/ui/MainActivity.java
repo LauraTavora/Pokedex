@@ -1,16 +1,19 @@
 package com.example.pokedex_mobile.ui;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.animation.AnimationUtils;
+import android.view.animation.LayoutAnimationController;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,55 +22,71 @@ import com.example.pokedex_mobile.R;
 import com.example.pokedex_mobile.data.PokemonRepository;
 import com.example.pokedex_mobile.dataRemote.RetrofitProvider;
 import com.example.pokedex_mobile.domain.PokemonUi;
+import com.example.pokedex_mobile.ui.TypeColors;
 import com.example.pokedex_mobile.ui.adapter.PokemonAdapter;
+import com.example.pokedex_mobile.ui.detail.PokemonDetailDialogFragment;
 import com.example.pokedex_mobile.ui.util.GridSpacingItemDecoration;
 import com.example.pokedex_mobile.ui.util.SimpleTextWatcher;
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity {
-
-    private DrawerLayout drawerLayout;
-    private ImageView ivMenu;
+public class MainActivity extends AppCompatActivity
+        implements PokemonDetailDialogFragment.OnNavigate {
 
     private RecyclerView rv;
-    private TextInputEditText etSearch;
-    private TextInputLayout tilSearch;
-
     private PokemonAdapter adapter;
-    private final PokemonRepository repo =
-            new PokemonRepository(RetrofitProvider.getApi());
+    private final List<PokemonUi> current = new ArrayList<>();
+    private int selectedIndex = -1;
+
+    private ImageView ivMenu;
+    private TextInputLayout tilSearch;
+    private TextInputEditText etSearch;
+
+    // Drawer
+    private DrawerLayout drawerLayout;
+    private LinearLayout navTypes; // <= PEGAR O NAVIGATIONVIEW
+
+    // Dados
+    private final PokemonRepository repo = new PokemonRepository(RetrofitProvider.getApi());
+    private @Nullable String currentTypeFilter = null; // null = “Todos”
+    private @NonNull String currentNameQuery = "";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main); // XML com Drawer + topbar + rv
 
-        // ====== Views do conteúdo ======
+        // ----- refs UI -----
         drawerLayout = findViewById(R.id.drawerLayout);
-        ivMenu = findViewById(R.id.ivMenu);
+        navTypes     = findViewById(R.id.drawerRoot);
+        ImageView ivPokeball = findViewById(R.id.ivPokeball);
 
-        rv = findViewById(R.id.rv);
-        etSearch = findViewById(R.id.etSearch);
+
+        ivMenu    = findViewById(R.id.ivMenu);
         tilSearch = findViewById(R.id.tilSearch);
+        etSearch  = findViewById(R.id.etSearch);
+        rv        = findViewById(R.id.rv);
 
-        // ====== RecyclerView ======
+        // ----- RecyclerView -----
         GridLayoutManager glm = new GridLayoutManager(this, 2);
         rv.setLayoutManager(glm);
-        adapter = new PokemonAdapter(p -> openDetail(p.name.toLowerCase()));
+        adapter = new PokemonAdapter(p -> openDetailPopup(p));
         rv.setAdapter(adapter);
-
         int space = (int) (getResources().getDisplayMetrics().density * 8); // 8dp
         rv.addItemDecoration(new GridSpacingItemDecoration(space));
 
-        // ====== Busca ======
-        // Em tempo real (digitando)
-        etSearch.addTextChangedListener(new SimpleTextWatcher(q -> adapter.filter(q)));
+        // ----- Busca por nome (não mexe em filtro por tipo) -----
+        etSearch.addTextChangedListener(new SimpleTextWatcher(q -> {
+            currentNameQuery = (q == null) ? "" : q;
+            if (adapter != null) adapter.setNameQuery(currentNameQuery);
+        }));
 
-        // Ação do teclado (Enter/Buscar)
+        // Ação do teclado (Buscar)
         etSearch.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 doSearch();
@@ -76,38 +95,123 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Ícone de lupa no TextInputLayout
+        // Clique na lupa do TextInputLayout
         tilSearch.setEndIconOnClickListener(v -> doSearch());
 
-        // ====== Menu (Drawer) ======
-        ivMenu.setOnClickListener(v -> drawerLayout.open());
+        // ----- Menu lateral (abre/fecha) -----
+        ivMenu.setOnClickListener(v -> {
+            if (drawerLayout != null) {
+                if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.openDrawer(GravityCompat.START);
+                } else {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                }
+            }
+        });
 
-        // Liga os botões de tipo do drawer
-        wireDrawerTypeButtons();
+        // ----- Liga os botões de tipo do NavigationView -----
+        wireTypeButtons(navTypes);
 
-        // ====== Carregar os 50 primeiros ======
+        // ----- Clique na Pokébola -----
+        ivPokeball.setOnClickListener(v -> {
+            // Só reseta se houver filtro de nome ou de tipo ativo
+            boolean hasNameFilter = etSearch.getText() != null && !etSearch.getText().toString().trim().isEmpty();
+            boolean hasTypeFilter = adapter != null && adapter.hasTypeFilter();
+
+            if (hasNameFilter || hasTypeFilter) {
+                // Animação de giro da Pokébola
+                ivPokeball.animate()
+                        .rotationBy(360f) // giro completo
+                        .setDuration(500)
+                        .withEndAction(() -> {
+                            // Resetar filtros
+                            etSearch.setText("");
+                            if (adapter != null) {
+                                adapter.setTypeFilter(null);
+                                adapter.setNameQuery("");
+                                adapter.notifyDataSetChanged();
+                            }
+
+                            // Animação suave nos cards da lista
+                            LayoutAnimationController controller = AnimationUtils.loadLayoutAnimation(
+                                    this, R.anim.layout_animation_fall_down
+                            );
+                            rv.setLayoutAnimation(controller);
+                            rv.scheduleLayoutAnimation();
+                        })
+                        .start();
+            }
+        });
+
+
+        // ----- Carregar os 50 primeiros -----
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                final List<PokemonUi> list = repo.loadFirst50();
-                runOnUiThread(() -> adapter.submit(list));
+                final List<PokemonUi> list = repo.loadDetail();
+                runOnUiThread(() -> {
+                    adapter.submit(list);
+                    // estado inicial: sem filtro de tipo e busca atual (nome)
+                    adapter.setTypeFilter(null);
+                    adapter.setNameQuery(etSearch.getText() == null ? "" : etSearch.getText().toString());
+
+                    current.clear();
+                    current.addAll(list);
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
     }
 
+    // Procura os botões e liga os cliques
+    private void wireTypeButtons(View parent) {
+        // IDs devem existir no header do NavigationView (ou no conteúdo do próprio nav)
+        bindTypeClick(parent, R.id.btnTypeGrass,    "Planta");
+        bindTypeClick(parent, R.id.btnTypePoison,   "Veneno");
+        bindTypeClick(parent, R.id.btnTypeFire,     "Fogo");
+        bindTypeClick(parent, R.id.btnTypeWater,    "Água");
+        bindTypeClick(parent, R.id.btnTypeFlying,   "Voador");
+        bindTypeClick(parent, R.id.btnTypeBug,      "Inseto");
+        bindTypeClick(parent, R.id.btnTypeNormal,   "Normal");
+        bindTypeClick(parent, R.id.btnTypePsychic,  "Psíquico");
+        bindTypeClick(parent, R.id.btnTypeRock,     "Pedra");
+        bindTypeClick(parent, R.id.btnTypeGround,   "Terra");
+        bindTypeClick(parent, R.id.btnTypeElectric, "Elétrico");
+        bindTypeClick(parent, R.id.btnTypeGhost,    "Fantasma");
+        bindTypeClick(parent, R.id.btnTypeFairy,    "Fada");
+    }
+
+    private void bindTypeClick(View parent, int viewId, @Nullable String typePtOrNull) {
+        View v = parent.findViewById(viewId);
+        if (v != null) {
+            v.setOnClickListener(x -> {
+                currentTypeFilter = typePtOrNull; // mantém o estado
+                if (adapter != null) adapter.setTypeFilter(typePtOrNull); // null = “Todos”
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+                hideKeyboard();
+            });
+        }
+    }
+
     private void doSearch() {
-        String q = etSearch.getText() == null ? "" : etSearch.getText().toString();
-        adapter.filter(q);
+        // Só esconde teclado; o filtro por nome já é feito no TextWatcher acima
         hideKeyboard();
     }
 
-    private void applyTypeFilter(String typePt) {
-        // Mostra o termo no campo (opcional) e aplica o filtro
-        if (etSearch != null) etSearch.setText(typePt);
-        adapter.filter(typePt);
+    private void resetFiltersToHome() {
+        // limpa texto
+        etSearch.setText("");
+        currentNameQuery = "";
+        if (adapter != null) adapter.setNameQuery("");
+
+        // limpa tipo
+        currentTypeFilter = null;
+        if (adapter != null) adapter.setTypeFilter(null);
+
+        // fecha drawer e sobe a lista
+        if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+        rv.scrollToPosition(0);
         hideKeyboard();
-        if (drawerLayout != null) drawerLayout.close();
     }
 
     private void hideKeyboard() {
@@ -118,48 +222,44 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void openDetail(String idOrName) {
-        Intent it = new Intent(this, PokemonDetailActivity.class);
-        it.putExtra("idOrName", idOrName);
-        startActivity(it);
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    private void openDetailPopup(PokemonUi p) {
+        int typeColor = TypeColors.bgFor(p.typesPt, this);
+        PokemonDetailDialogFragment
+                .newInstance(p, typeColor)
+                .show(getSupportFragmentManager(), "pokemon_detail");
     }
 
-    @SuppressLint("GestureBackNavigation")
+    // ===== Navegação (setas no dialog) =====
     @Override
-    public void onBackPressed() {
-        if (drawerLayout != null && drawerLayout.isOpen()) {
-            drawerLayout.close();
-        } else {
-            super.onBackPressed();
+    public void onNavigatePrev(@NonNull PokemonUi current) {
+        int idx = findIndex(current);
+        if (idx > 0) {
+            // deixo vazio, pois a navegação é controlada pelo próprio dialog chamando requestPrev/Next
         }
     }
 
-    /**
-     * Conecta os botões do layout @layout/drawer_filter às ações de filtro.
-     * Os IDs abaixo devem existir em drawer_filter.xml. Se algum ainda não
-     * existir, o método ignora silenciosamente.
-     */
-    private void wireDrawerTypeButtons() {
-        bindTypeButton(R.id.btnTypeGrass, "Planta");
-        bindTypeButton(R.id.btnTypePoison, "Venenoso");
-        bindTypeButton(R.id.btnTypeFire, "Fogo");
-        bindTypeButton(R.id.btnTypeFlying, "Voador");
-        bindTypeButton(R.id.btnTypeWater, "Água");
-        bindTypeButton(R.id.btnTypeBug, "Inseto");
-        bindTypeButton(R.id.btnTypeNormal, "Normal");
-        bindTypeButton(R.id.btnTypePsychic, "Psíquico");
-        bindTypeButton(R.id.btnTypeRock, "Rocha");
-        bindTypeButton(R.id.btnTypeGround, "Terra");
-        bindTypeButton(R.id.btnTypeElectric, "Elétrico");
-        bindTypeButton(R.id.btnTypeGhost, "Fantasma");
-        bindTypeButton(R.id.btnTypeFairy, "Fada");
-    }
-
-    private void bindTypeButton(int viewId, String typePt) {
-        View v = findViewById(viewId);
-        if (v != null) {
-            v.setOnClickListener(x -> applyTypeFilter(typePt));
+    @Override
+    public void onNavigateNext(@NonNull PokemonUi current) {
+        int idx = findIndex(current);
+        if (idx >= 0 && idx < adapterSize() - 1) {
+            // idem acima
         }
     }
+
+    @Nullable
+    public PokemonUi requestPrev(@NonNull PokemonUi current) {
+        int idx = findIndex(current);
+        return (idx > 0) ? adapterItemAt(idx - 1) : null;
+    }
+
+    @Nullable
+    public PokemonUi requestNext(@NonNull PokemonUi current) {
+        int idx = findIndex(current);
+        return (idx >= 0 && idx < adapterSize() - 1) ? adapterItemAt(idx + 1) : null;
+    }
+
+    // Helpers que consultam o adapter (sem duplicar estado)
+    private int findIndex(PokemonUi p) { return adapter != null ? adapter.indexOfId(p.id) : -1; }
+    private PokemonUi adapterItemAt(int i) { return adapter != null ? adapter.getItem(i) : null; }
+    private int adapterSize() { return adapter != null ? adapter.getItemCount() : 0; }
 }

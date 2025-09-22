@@ -1,9 +1,7 @@
 package com.example.pokedex_mobile.ui.adapter;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,8 +9,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import android.graphics.PorterDuff;
 import androidx.annotation.NonNull;
-import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -29,91 +27,83 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.VH> {
 
     private final List<PokemonUi> items = new ArrayList<>();
     private final List<PokemonUi> full  = new ArrayList<>();
+
+    private String nameQuery = "";   // busca por nome (barra)
+    private String typeFilter = "";  // filtro por tipo (drawer)
+
     private final OnClick click;
 
     public PokemonAdapter(OnClick click) { this.click = click; }
 
     public void submit(List<PokemonUi> list) {
-        items.clear(); items.addAll(list);
-        full.clear();  full.addAll(list);
-        notifyDataSetChanged();
+        full.clear();
+        if (list != null) full.addAll(list);
+        applyFilters();
     }
 
-    public void filter(String q) {
-        String s = q == null ? "" : q.trim().toLowerCase();
+    // ===== NOVO: filtros independentes =====
+    public void setNameQuery(String q) {
+        nameQuery = q == null ? "" : q.trim().toLowerCase();
+        applyFilters();
+    }
+
+    public void setTypeFilter(String typePt) {
+        typeFilter = typePt == null ? "" : typePt.trim().toLowerCase();
+        applyFilters();
+    }
+
+    public boolean hasTypeFilter() {
+        return typeFilter != null && !typeFilter.trim().isEmpty();
+    }
+
+    private void applyFilters() {
         items.clear();
-        if (s.isEmpty()) {
-            items.addAll(full);
-        } else {
-            for (PokemonUi p : full) {
-                boolean match = p.name.toLowerCase().contains(s);
-                if (!match) {
+        for (PokemonUi p : full) {
+            boolean ok = true;
+
+            // Nome (apenas nome)
+            if (!nameQuery.isEmpty()) {
+                ok = p.name != null && p.name.toLowerCase().contains(nameQuery);
+            }
+
+            // Tipo (apenas tipo) — combina com o filtro anterior (AND)
+            if (ok && !typeFilter.isEmpty()) {
+                boolean hasType = false;
+                if (p.typesPt != null) {
                     for (String t : p.typesPt) {
-                        if (t.toLowerCase().contains(s)) { match = true; break; }
+                        if (t != null && t.trim().equalsIgnoreCase(typeFilter)) {
+                            hasType = true; break;
+                        }
                     }
                 }
-                if (match) items.add(p);
+                ok = hasType;
             }
+
+            if (ok) items.add(p);
         }
         notifyDataSetChanged();
     }
 
+    public PokemonUi getItem(int position) {
+        return (position >= 0 && position < items.size()) ? items.get(position) : null;
+    }
+
+    public int indexOfId(int id) {
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).id == id) return i;
+        }
+        return -1;
+    }
+
     @NonNull @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_pokemon, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_pokemon, parent, false);
         return new VH(v);
     }
 
-    @Override public void onBindViewHolder(@NonNull VH h, int position) {
-        h.bind(items.get(position), click);
-    }
-
+    @Override public void onBindViewHolder(@NonNull VH h, int position) { h.bind(items.get(position), click); }
     @Override public int getItemCount() { return items.size(); }
 
-    // ===== Helpers de cor =====
-
-    private static int tintForPokeball(int base) {
-        // candidatos: muito mais claro e muito mais escuro
-        int light = mixWithColor(base, Color.WHITE, 0.72f); // 72% branco
-        int dark  = mixWithColor(base, Color.BLACK, 0.55f); // 55% preto
-
-        double lumBase  = ColorUtils.calculateLuminance(base);
-        double lumLight = ColorUtils.calculateLuminance(light);
-        double lumDark  = ColorUtils.calculateLuminance(dark);
-
-        // escolhe o que contrasta mais com o fundo
-        int chosen = Math.abs(lumLight - lumBase) >= Math.abs(lumDark - lumBase) ? light : dark;
-
-        // dá uma "lavada": reduz saturação
-        float[] hsl = new float[3];
-        ColorUtils.colorToHSL(chosen, hsl);
-        hsl[1] = clamp(hsl[1] * 0.55f); // menos saturado
-        int washed = ColorUtils.HSLToColor(hsl);
-
-        // alpha agradável (ajuste fino aqui se quiser mais/menos presença)
-        return ColorUtils.setAlphaComponent(washed, (int) (255 * 1f));
-    }
-
-    private static int mixWithColor(int color, int mix, float ratio) {
-        // ratio: 0..1 (quanto de 'mix' entra)
-        int a = 255;
-        int r = Math.round(Color.red(color)   * (1f - ratio) + Color.red(mix)   * ratio);
-        int g = Math.round(Color.green(color) * (1f - ratio) + Color.green(mix) * ratio);
-        int b = Math.round(Color.blue(color)  * (1f - ratio) + Color.blue(mix)  * ratio);
-        return Color.argb(a, r, g, b);
-    }
-
-    private static float clamp(float v) {
-        return v < 0f ? 0f : (v > 1f ? 1f : v);
-    }
-
-
-    private static int dp(Context ctx, int v) {
-        return Math.round(v * ctx.getResources().getDisplayMetrics().density);
-    }
-
-    // ===== ViewHolder =====
     static class VH extends RecyclerView.ViewHolder {
         TextView tvName;
         LinearLayout chips;
@@ -131,40 +121,37 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.VH> {
 
         void bind(PokemonUi p, OnClick click) {
             Context ctx = itemView.getContext();
-
-            // Título
             tvName.setText(p.name);
 
-            // Cor base do card por tipo
+            // Fundo por tipo
             int base = TypeColors.bgFor(p.typesPt, ctx);
             bg.setBackgroundColor(base);
 
             // Sprite
             Glide.with(ctx).load(p.imageUrl).into(ivSprite);
 
-            // Pokébola do card: escolhe automaticamente um tom claro/escuro com bom contraste
-            ivPokeballBg.setImageAlpha(255);
-            int softTint = tintForPokeball(base); // <<< usa a função abaixo
-            ivPokeballBg.setImageTintList(ColorStateList.valueOf(softTint));
-            ivPokeballBg.setImageTintMode(PorterDuff.Mode.SRC_IN);
+            // Pokébola com leve tinta do tipo (destacada mas suave)
+            int pokeTint = (base & 0x00FFFFFF) | (0xCC << 24); // ~80% opacidade
+            ivPokeballBg.setColorFilter(pokeTint, PorterDuff.Mode.SRC_ATOP);
 
-
-            // Chips de tipos (empilhados)
+            // Chips empilhados
             chips.removeAllViews();
-            for (String t : p.typesPt) {
-                TextView chip = new TextView(ctx);
-                chip.setText(t);
-                chip.setBackgroundResource(R.drawable.bg_chip);
-                chip.setTextColor(Color.WHITE);
-                chip.setTextSize(12f);
-                chip.setPadding(dp(ctx,14), dp(ctx,6), dp(ctx,14), dp(ctx,6));
+            int dp = (int) (ctx.getResources().getDisplayMetrics().density);
+            if (p.typesPt != null) {
+                for (String t : p.typesPt) {
+                    TextView chip = new TextView(ctx);
+                    chip.setText(t);
+                    chip.setBackgroundResource(R.drawable.bg_chip);
+                    chip.setTextColor(Color.WHITE);
+                    chip.setTextSize(12f);
+                    chip.setPadding(14*dp, 6*dp, 14*dp, 6*dp);
 
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-                lp.topMargin = dp(ctx,6);
-                chips.addView(chip, lp);
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT);
+                    lp.topMargin = 6*dp;
+                    chips.addView(chip, lp);
+                }
             }
 
             itemView.setOnClickListener(v -> click.onClick(p));

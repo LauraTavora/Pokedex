@@ -18,7 +18,7 @@ public class PokemonRepository {
 
     public PokemonRepository(PokeApi api) { this.api = api; }
 
-    public List<PokemonUi> loadFirst50() throws Exception {
+    public List<PokemonUi> loadDetail() throws Exception {
         Response<PokemonListResponse> resp = api.list(50).execute();
         if (!resp.isSuccessful() || resp.body() == null) throw new IOException("Falha na lista");
 
@@ -37,4 +37,7 @@ public class PokemonRepository {
         out.sort(Comparator.comparingInt(p -> p.id));
         return out;
     }
+
+
+
 }
