@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <!-- Cartão central: tamanho fixo e fundo branco (mais alto p/ caber todos os stats) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardDetail"
+        android:layout_width="360dp"
+        android:layout_height="600dp"
+        android:layout_gravity="center"
+        app:cardCornerRadius="24dp"
+        app:cardUseCompatPadding="true"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="@android:color/white">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="12dp">
+
+            <!-- Prev -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btPrev"
+                android:paddingStart="4dp"
+                android:paddingEnd="8dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                app:fabCustomSize="32dp"
+                android:src="@drawable/ic_arrow_left"
+                android:padding="6dp"
+                app:backgroundTint="@color/type_fire"
+                app:useCompatPadding="false"
+                android:stateListAnimator="@null"
+                app:elevation="0dp"
+                app:pressedTranslationZ="0dp"
+                app:rippleColor="@android:color/transparent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/ivSprite"
+                app:layout_constraintBottom_toBottomOf="@id/ivSprite"
+                android:translationX="-6dp"/>
+
+
+            <!-- Next -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btNext"
+                android:paddingStart="25dp"
+                android:paddingEnd="4dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                app:fabCustomSize="32dp"
+                android:src="@drawable/ic_arrow_right"
+                app:tint="@android:color/white"
+                app:useCompatPadding="false"
+                android:stateListAnimator="@null"
+                app:elevation="0dp"
+                app:rippleColor="@android:color/transparent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/ivSprite"
+                app:layout_constraintBottom_toBottomOf="@id/ivSprite"
+                android:translationX="6dp"/>
+
+            <!-- Sprite -->
+            <ImageView
+                android:id="@+id/ivSprite"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:scaleType="centerInside"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp"/>
+
+            <!-- Nome -->
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Charmander"
+                android:textStyle="bold"
+                android:textSize="22sp"
+                android:textColor="@color/text_primary"
+                android:gravity="center"
+                app:layout_constraintTop_toBottomOf="@id/ivSprite"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="4dp"/>
+
+            <!-- Chips de tipo (um chip por tipo) -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupTypes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                app:singleLine="true"
+                app:singleSelection="false"
+                app:layout_constraintTop_toBottomOf="@id/tvTitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+
+            <!-- Tabs sem fundo -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabs"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                app:tabIndicatorFullWidth="false"
+                app:tabMode="fixed"
+                app:tabGravity="fill"
+                app:tabTextColor="@color/text_secondary"
+                app:tabSelectedTextColor="@color/text_primary"
+                app:layout_constraintTop_toBottomOf="@id/chipGroupTypes"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="12dp"/>
+
+            <!-- ===== STATS (sem scroll, todos visíveis) ===== -->
+            <LinearLayout
+                android:id="@+id/groupStats"
+                android:orientation="vertical"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tabs"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <include layout="@layout/row_stat_value_only" android:id="@+id/row_hp"/>
+                <include layout="@layout/row_stat_value_only" android:id="@+id/row_atk"/>
+                <include layout="@layout/row_stat_value_only" android:id="@+id/row_def"/>
+                <include layout="@layout/row_stat_with_bar" android:id="@+id/row_sp_atk"/>
+                <include layout="@layout/row_stat_with_bar" android:id="@+id/row_sp_def"/>
+                <include layout="@layout/row_stat_with_bar" android:id="@+id/row_speed"/>
+
+                <!-- Loader opcional (fica invisível por padrão) -->
+                <ProgressBar
+                    android:id="@+id/abilitiesLoading"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="6dp"/>
+            </LinearLayout>
+
+            <!-- ===== HABILIDADES (também sem scroll) ===== -->
+            <LinearLayout
+                android:id="@+id/groupAbilities"
+                android:orientation="vertical"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/tabs"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <LinearLayout
+                    android:id="@+id/abilitiesContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:dividerPadding="8dp"/>
+            </LinearLayout>
+
+            <!-- ===== EVOLUTIONS (sem scroll) ===== -->
+            <LinearLayout
+                android:id="@+id/groupEvolutions"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                app:layout_constraintTop_toBottomOf="@id/tabs"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <LinearLayout
+                    android:id="@+id/evolutionsRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"/>
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>

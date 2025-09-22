@@ -1,6 +1,9 @@
 <resources>
     <color name="text_primary">#222222</color>
+    <color name="text_secondary">#666666</color>
     <color name="text_on_card">#FFFFFFFF</color>
+    <color name="chip_translucent_white">#33FFFFFF</color>
+
 
     <!-- Paleta por tipo -->
     <color name="type_grass">#4DD6A0</color>
@@ -16,4 +19,7 @@
     <color name="type_electric">#FFD966</color>
     <color name="type_ghost">#705898</color>
     <color name="type_fairy">#FFBED2</color>
+
+    <!-- Default -->
+    <color name="black">#000000</color>
 </resources>

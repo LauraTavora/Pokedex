@@ -1,0 +1,29 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <TextView
+        android:id="@+id/tvLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.8"
+        android:minEms="10"
+        android:maxLines="1"
+        android:text="Defesa"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary" />
+
+    <TextView
+        android:id="@+id/tvValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="36dp"
+        android:gravity="end"
+        android:text="0"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary" />
+</LinearLayout>

@@ -28,24 +28,52 @@ public class PokemonMapper {
         STAT_PT = Collections.unmodifiableMap(s);
     }
 
+    private static String cap(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0,1).toUpperCase() + s.substring(1);
+    }
+
     public static PokemonUi toUi(PokemonDetailClass d) {
-        String name = d.name.substring(0,1).toUpperCase() + d.name.substring(1);
-        String img = d.sprites != null && d.sprites.other != null &&
-                d.sprites.other.officialArtwork != null ? d.sprites.other.officialArtwork.front_default : null;
+        String name = cap(d.name);
+        String img = (d.sprites != null && d.sprites.other != null &&
+                d.sprites.other.officialArtwork != null)
+                ? d.sprites.other.officialArtwork.front_default : null;
 
         List<String> types = d.types.stream()
                 .sorted(Comparator.comparingInt(ts -> ts.slot))
                 .map(ts -> TYPE_PT.getOrDefault(ts.type.name, ts.type.name))
                 .collect(Collectors.toList());
 
-        Map<String,Integer> stats = new LinkedHashMap<>();
-        d.stats.forEach(s -> {
-            String k = STAT_PT.getOrDefault(s.stat.name, s.stat.name);
+        // stats “achatados”
+        int hp = 0, atk = 0, def = 0, spAtk = 0, spDef = 0, speed = 0;
+        for (PokemonDetailClass.StatSlot s : d.stats) {
+            String k = s.stat.name;
             int v = Math.max(0, Math.min(180, s.baseStat));
-            stats.put(k, v);
-        });
+            switch (k) {
+                case "hp": hp = v; break;
+                case "attack": atk = v; break;
+                case "defense": def = v; break;
+                case "special-attack": spAtk = v; break;
+                case "special-defense": spDef = v; break;
+                case "speed": speed = v; break;
+            }
+        }
 
-        return new PokemonUi(d.id, name, img, types, stats);
+        // abilities (já em PT “bonitinho” = só capitaliza e troca ‘-’ por espaço)
+        List<String> abilities = new ArrayList<>();
+        if (d.abilities != null) {
+            for (PokemonDetailClass.AbilitySlot a : d.abilities) {
+                if (a != null && a.ability != null && a.ability.name != null) {
+                    String nm = a.ability.name.trim();
+                    if (!nm.isEmpty()) abilities.add(cap(nm.replace('-', ' ')));
+                }
+            }
+        }
+
+        return new PokemonUi(
+                d.id, name, img, types,
+                hp, atk, def, spAtk, spDef, speed,
+                abilities
+        );
     }
 }
-
