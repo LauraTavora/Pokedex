@@ -22,4 +22,8 @@
 
     <!-- Default -->
     <color name="black">#000000</color>
+
+    <!-- Buttons -->
+    <color name="battle">#D50000</color>
+    <color name="red_600">#E00201</color>
 </resources>

@@ -3,12 +3,13 @@ package com.example.pokedex_mobile.ui.detail;
 import android.app.Dialog;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.text.LineBreaker;
 import android.os.Bundle;
+import android.text.Layout;
 import android.view.*;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -39,7 +40,6 @@ public class PokemonDetailDialogFragment extends DialogFragment {
     private static final String ARG_UI = "arg_ui";
     private static final String ARG_COLOR = "arg_color";
 
-    /** A Activity deve devolver o anterior/próximo da lista atual (sem reabrir dialog) */
     public interface OnNavigate {
         void onNavigatePrev(@NonNull PokemonUi current);
         void onNavigateNext(@NonNull PokemonUi current);
@@ -57,15 +57,16 @@ public class PokemonDetailDialogFragment extends DialogFragment {
     private TextView tvTitle;
     private TabLayout tabs;
 
-    // ChipGroup de tipos (você já tinha)
+    // ChipGroup de tipos (header)
     private ChipGroup cgTypes;
 
+    // Seções
     private LinearLayout abilitiesContainer, groupStats, groupAbilities, groupEvolutions, evolutionsRow;
     private View abilitiesLoading;
 
     private volatile boolean evolutionsLoaded = false;
 
-    // Linhas de stats (você já tinha)
+    // Linhas de stats
     private View rowHp, rowAtk, rowDef, rowSpAtk, rowSpDef, rowSpeed;
 
     public static PokemonDetailDialogFragment newInstance(@NonNull PokemonUi ui, int typeColor) {
@@ -100,7 +101,7 @@ public class PokemonDetailDialogFragment extends DialogFragment {
         if (d.getWindow() != null) {
             d.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             WindowManager.LayoutParams lp = d.getWindow().getAttributes();
-            lp.dimAmount = 0.85f; // intensidade da sombra
+            lp.dimAmount = 0.85f; // sombra no fundo
             d.getWindow().setAttributes(lp);
             d.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         }
@@ -131,9 +132,10 @@ public class PokemonDetailDialogFragment extends DialogFragment {
         abilitiesContainer = v.findViewById(R.id.abilitiesContainer);
         abilitiesLoading   = v.findViewById(R.id.abilitiesLoading);
 
-        // Evolutions (NOVO)
+        // Evolutions
         groupEvolutions = v.findViewById(R.id.groupEvolutions);
         evolutionsRow   = v.findViewById(R.id.evolutionsRow);
+        evolutionsRow.setGravity(Gravity.CENTER_VERTICAL);
 
         rowHp    = v.findViewById(R.id.row_hp);
         rowAtk   = v.findViewById(R.id.row_atk);
@@ -142,7 +144,7 @@ public class PokemonDetailDialogFragment extends DialogFragment {
         rowSpDef = v.findViewById(R.id.row_sp_def);
         rowSpeed = v.findViewById(R.id.row_speed);
 
-        // Tabs – agora com 3 abas (Stats / Habilities / Evolutions)
+        // Tabs – 3 abas (Stats / Habilities / Evolutions)
         tabs.removeAllTabs();
         tabs.addTab(tabs.newTab().setText(R.string.tab_stats));
         tabs.addTab(tabs.newTab().setText(R.string.tab_habilities));
@@ -200,7 +202,7 @@ public class PokemonDetailDialogFragment extends DialogFragment {
         Glide.with(this).load(p.imageUrl).into(ivSprite);
         tvTitle.setText(p.name);
 
-        // Chips (primário + secundário mantendo a cor de cada)
+        // Chips do header (primário + secundário), com Material 3
         if (cgTypes != null) {
             cgTypes.removeAllViews();
             if (p.typesPt != null && !p.typesPt.isEmpty()) {
@@ -213,7 +215,7 @@ public class PokemonDetailDialogFragment extends DialogFragment {
             }
         }
 
-        // Tab indicator na cor do tipo (vale para Evolutions também)
+        // Tab indicator na cor do tipo
         tabs.setSelectedTabIndicatorColor(typeColor);
         tabs.setTabTextColors(
                 ContextCompat.getColor(requireContext(), R.color.text_secondary),
@@ -291,22 +293,24 @@ public class PokemonDetailDialogFragment extends DialogFragment {
         return tv;
     }
 
+    /** Chip “grande” do header (Material 3). */
     private Chip buildTypeChip(@NonNull String text, int bgColor) {
         Chip chip = new Chip(requireContext());
         chip.setText(text);
-        chip.setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body2);
+        chip.setTextAppearance(R.style.TextAppearance_Pokedex_BodySmall);
         chip.setChipBackgroundColor(ColorStateList.valueOf(bgColor));
         chip.setTextColor(Color.WHITE);
         chip.setCheckable(false);
         chip.setClickable(false);
-        chip.setChipMinHeight(dp(32));
-        chip.setChipCornerRadius(dp(16));
-        int hp = dp(10);
+        chip.setChipMinHeight(dp(28));
+        chip.setChipCornerRadius(dp(14));
+        int hp = dp(8);
         chip.setPadding(hp, 0, hp, 0);
+        chip.setEnsureMinTouchTargetSize(false);
         return chip;
     }
 
-    // ===== Evolutions (NOVO) =====
+    // ===== Evolutions =====
 
     private void loadEvolutionsIfNeeded() {
         if (evolutionsLoaded || pokemon == null) return;
@@ -315,7 +319,7 @@ public class PokemonDetailDialogFragment extends DialogFragment {
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                // 1) species -> evolution_chain
+                // species -> evolution_chain
                 Response<SpeciesDTO> sp = RetrofitProvider.getApi()
                         .species(pokemon.name.toLowerCase())
                         .execute();
@@ -324,17 +328,17 @@ public class PokemonDetailDialogFragment extends DialogFragment {
                 int chainId = parseChainId(sp.body().evolution_chain.url);
                 if (chainId <= 0) return;
 
-                // 2) evolution chain
+                // evolution chain
                 Response<EvolutionChainDTO> ch = RetrofitProvider.getApi()
                         .evolutionChain(chainId)
                         .execute();
                 if (!ch.isSuccessful() || ch.body() == null || ch.body().chain == null) return;
 
-                // 3) percorre a chain em ordem linear
+                // percorre a chain em ordem linear
                 List<String> names = new ArrayList<>();
                 collectChainNames(ch.body().chain, names);
 
-                // 4) pega detalhes de cada estágio para montar imagem/tipos
+                // pega detalhes de cada estágio
                 List<PokemonUi> evoUis = new ArrayList<>();
                 for (String nm : names) {
                     Response<com.example.pokedex_mobile.dataRemote.model.PokemonDetailClass> d =
@@ -349,7 +353,7 @@ public class PokemonDetailDialogFragment extends DialogFragment {
                     evolutionsRow.removeAllViews();
                     for (int i = 0; i < evoUis.size(); i++) {
                         PokemonUi ui = evoUis.get(i);
-                        evolutionsRow.addView(buildEvolutionItem(ui));
+                        evolutionsRow.addView(buildEvolutionItem(ui)); // col com weight=1
                         if (i < evoUis.size() - 1) {
                             evolutionsRow.addView(buildArrow(typeColor));
                         }
@@ -363,7 +367,7 @@ public class PokemonDetailDialogFragment extends DialogFragment {
 
     private int parseChainId(String url) {
         try {
-            // exemplo: https://pokeapi.co/api/v2/evolution-chain/67/
+            // ex: https://pokeapi.co/api/v2/evolution-chain/67/
             String path = URI.create(url).getPath();
             String[] parts = path.split("/");
             for (int i = parts.length - 1; i >= 0; i--) {
@@ -383,37 +387,61 @@ public class PokemonDetailDialogFragment extends DialogFragment {
         }
     }
 
+    /** Coluna da evolução — MENOR + ALINHADA e ocupando espaço uniforme na linha. */
     private View buildEvolutionItem(@NonNull PokemonUi ui) {
+        // coluna vertical que ocupa 1 fração da largura total
         LinearLayout col = new LinearLayout(requireContext());
         col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(Gravity.CENTER_HORIZONTAL);
         col.setPadding(dp(4), 0, dp(4), 0);
-        col.setGravity(Gravity.CENTER);
 
+        LinearLayout.LayoutParams lpCol =
+                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        col.setLayoutParams(lpCol);
+
+        // imagem
         ImageView img = new ImageView(requireContext());
-        int size = dp(72); // era 84dp -> menor
+        int size = dp(68); // um pouco menor
         LinearLayout.LayoutParams lpI = new LinearLayout.LayoutParams(size, size);
         img.setLayoutParams(lpI);
         img.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         Glide.with(this).load(ui.imageUrl).into(img);
 
+        // nome - até 2 linhas, sem "..."
         TextView name = new TextView(requireContext());
         name.setText(ui.name);
         name.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
-        name.setTextSize(12f); // era 14f -> menor
+        name.setTextSize(12f);
         name.setGravity(Gravity.CENTER);
         name.setPadding(0, dp(4), 0, dp(2));
+        name.setMaxLines(2);
+        name.setEllipsize(null); // não coloca "..."
+        // melhora quebra de linha em nomes longos (API 23+)
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+            name.setBreakStrategy(LineBreaker.BREAK_STRATEGY_BALANCED);
+            name.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL);
+        }
 
+        // chips de tipo - ocupam a largura da coluna e podem quebrar linha
         ChipGroup chips = new ChipGroup(requireContext());
         chips.setSingleLine(false);
         chips.setSingleSelection(false);
         chips.setChipSpacingHorizontal(dp(4));
-        chips.setChipSpacingVertical(dp(1));
+        chips.setChipSpacingVertical(dp(2));
+
+        LinearLayout.LayoutParams lpChips =
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+        lpChips.gravity = Gravity.CENTER_HORIZONTAL; // garante centralização dos chips no pai
+        chips.setLayoutParams(lpChips);
+        chips.setPadding(0, 0, 0, 0);
 
         if (ui.typesPt != null) {
-            for (int i = 0; i < ui.typesPt.size(); i++) {
-                String tt = ui.typesPt.get(i);
+            for (String tt : ui.typesPt) {
                 int c = TypeColors.bgFor(java.util.Collections.singletonList(tt), requireContext());
-                chips.addView(buildTypeChipCompact(tt, c)); // chip menor
+                chips.addView(buildTypeChipCompact(tt, c));
             }
         }
 
@@ -423,37 +451,44 @@ public class PokemonDetailDialogFragment extends DialogFragment {
         return col;
     }
 
+    /** Seta entre estágios — MENOR. */
     private ImageView buildArrow(int color) {
         ImageView iv = new ImageView(requireContext());
         iv.setImageResource(R.drawable.ic_arrow_right);
         iv.setImageTintList(ColorStateList.valueOf(Color.WHITE));
         iv.setBackgroundResource(R.drawable.bg_circle_button);
         iv.setBackgroundTintList(ColorStateList.valueOf(color));
-        int s = dp(24); // era 28dp -> menor
+
+        int s = dp(22); // ligeiramente menor
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
-        lp.setMargins(dp(6), dp(16), dp(6), 0); // menos margem
+        lp.setMargins(dp(4), dp(14), dp(4), 0);
+        lp.gravity = Gravity.CENTER_VERTICAL; // centraliza na linha
         iv.setLayoutParams(lp);
         iv.setPadding(dp(4), dp(4), dp(4), dp(4));
+        iv.setElevation(0f);
         return iv;
     }
 
+
+    /** Chip compacto (Material 3) para usar nas evoluções — cabe lado a lado. */
     private Chip buildTypeChipCompact(@NonNull String text, int bgColor) {
         Chip chip = new Chip(requireContext());
         chip.setText(text);
-        chip.setTextAppearance(
-                com.google.android.material.R.style.TextAppearance_MaterialComponents_Caption
-        );
-        chip.setTextSize(10f);
+
+        // use um textAppearance leve do Material (via recursos da lib)
+        chip.setTextAppearance(R.style.TextAppearance_Pokedex_BodySmall);
+
+        chip.setTextSize(10f); // reforça tamanho pequeno
         chip.setChipBackgroundColor(ColorStateList.valueOf(bgColor));
         chip.setTextColor(Color.WHITE);
         chip.setCheckable(false);
         chip.setClickable(false);
 
-        chip.setChipMinHeight(dp(20));
+        chip.setEnsureMinTouchTargetSize(false); // permite chip menor
+        chip.setChipMinHeight(dp(18));           // mais baixo
         chip.setChipCornerRadius(dp(10));
         int hp = dp(6);
         chip.setPadding(hp, 0, hp, 0);
-        chip.setEnsureMinTouchTargetSize(false);
         return chip;
     }
 
