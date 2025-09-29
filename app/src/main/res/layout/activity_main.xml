@@ -2,12 +2,16 @@
 <androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
     <!-- ================== CONTEÚDO (ConstraintLayout) ================== -->
+
+    <!-- ================== DRAWER ESQUERDO ================== -->
+    <!-- Substitua @layout/drawer_filter pelo seu layout do menu lateral -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/rootContent"
         android:layout_width="match_parent"
@@ -19,25 +23,23 @@
             android:id="@+id/ivMenu"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:src="@drawable/ic_menu"
+            android:layout_marginStart="16dp"
             android:contentDescription="@string/menu"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tilSearch"
+            android:src="@drawable/ic_menu"
             app:layout_constraintBottom_toBottomOf="@id/tilSearch"
-            android:layout_marginStart="16dp"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tilSearch" />
 
         <!-- Campo de busca -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilSearch"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="86dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
+            android:layout_marginTop="44dp"
             android:layout_marginEnd="12dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toEndOf="@id/ivMenu"
-            app:layout_constraintEnd_toStartOf="@id/ivPokeball"
+
             app:boxBackgroundMode="outline"
             app:boxBackgroundColor="#FFFFFFFF"
             app:boxStrokeColor="#000000"
@@ -46,56 +48,88 @@
             app:boxCornerRadiusTopEnd="14dp"
             app:boxCornerRadiusBottomStart="14dp"
             app:boxCornerRadiusBottomEnd="14dp"
+
             app:endIconMode="custom"
             app:endIconDrawable="@drawable/ic_lupa"
-            app:endIconContentDescription="@string/search_hint">
+            app:endIconContentDescription="@string/search_hint"
+
+            app:layout_constraintStart_toEndOf="@id/ivMenu"
+            app:layout_constraintEnd_toStartOf="@id/ivPokeball"
+            app:layout_constraintTop_toTopOf="parent"
+
+            app:hintEnabled="true"
+            android:hint="@string/search_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSearch"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:hint="@string/search_hint"
-                android:textColorHint="#000000"
+                android:layout_height="wrap_content"
+
+                android:inputType="textMultiLine"
+                android:imeOptions="actionSearch"
+
+                android:maxLines="4"
+                android:minLines="1"
+
+                android:scrollHorizontally="false"
+                android:ellipsize="none"
+
+                android:gravity="top|start"
+                android:includeFontPadding="false"
+
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:singleLine="true"
-                android:imeOptions="actionSearch"/>
+                android:paddingEnd="48dp"  />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Pokébola pequena à direita da barra -->
+
         <ImageView
             android:id="@+id/ivPokeball"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/ic_pokeball"
+            android:layout_marginEnd="16dp"
             android:contentDescription="@string/app_name"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tilSearch"
+            android:src="@drawable/ic_pokeball"
             app:layout_constraintBottom_toBottomOf="@id/tilSearch"
-            android:layout_marginEnd="16dp"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tilSearch" />
 
         <!-- Lista de Pokémons -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:layout_marginTop="16dp"
             android:clipToPadding="false"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/tilSearch"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:spanCount="2"/>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tilSearch"
+            app:spanCount="2" />
+
+        <!-- Botão flutuante de BATALHA -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabBattle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="32dp"
+            android:contentDescription="@string/app_name"
+            app:backgroundTint="@color/battle"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_battle"
+            app:tint="@android:color/white" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- ================== DRAWER ESQUERDO ================== -->
-    <!-- Substitua @layout/drawer_filter pelo seu layout do menu lateral -->
     <include
         layout="@layout/drawer_filter"
         android:layout_width="300dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"/>
+
 </androidx.drawerlayout.widget.DrawerLayout>

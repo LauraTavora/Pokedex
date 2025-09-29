@@ -1,8 +1,10 @@
 package com.example.pokedex_mobile.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.view.inputmethod.EditorInfo;
@@ -27,7 +29,7 @@ import com.example.pokedex_mobile.ui.adapter.PokemonAdapter;
 import com.example.pokedex_mobile.ui.detail.PokemonDetailDialogFragment;
 import com.example.pokedex_mobile.ui.util.GridSpacingItemDecoration;
 import com.example.pokedex_mobile.ui.util.SimpleTextWatcher;
-import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -56,6 +58,9 @@ public class MainActivity extends AppCompatActivity
     private @Nullable String currentTypeFilter = null; // null = “Todos”
     private @NonNull String currentNameQuery = "";
 
+    // ===== Overlay da “pokébola abrindo” (NOVO) =====
+    private View doorOverlay, doorTop, doorBottom;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,11 +71,20 @@ public class MainActivity extends AppCompatActivity
         navTypes     = findViewById(R.id.drawerRoot);
         ImageView ivPokeball = findViewById(R.id.ivPokeball);
 
-
         ivMenu    = findViewById(R.id.ivMenu);
         tilSearch = findViewById(R.id.tilSearch);
         etSearch  = findViewById(R.id.etSearch);
+        // garante o comportamento de 1 linha com rolagem horizontal
+        etSearch.setHorizontallyScrolling(true);
+        etSearch.setMaxLines(1);
+        etSearch.setSingleLine(true);
+        etSearch.setEllipsize(null); // sem reticências; deixa rolar
+
         rv        = findViewById(R.id.rv);
+
+        // Botão de batalha
+        FloatingActionButton fabBattle = findViewById(R.id.fabBattle);
+        fabBattle.setOnClickListener(v -> startActivity(new Intent(this, PokemonPickActivity.class)));
 
         // ----- RecyclerView -----
         GridLayoutManager glm = new GridLayoutManager(this, 2);
@@ -143,7 +157,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-
         // ----- Carregar os 50 primeiros -----
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
@@ -195,22 +208,6 @@ public class MainActivity extends AppCompatActivity
 
     private void doSearch() {
         // Só esconde teclado; o filtro por nome já é feito no TextWatcher acima
-        hideKeyboard();
-    }
-
-    private void resetFiltersToHome() {
-        // limpa texto
-        etSearch.setText("");
-        currentNameQuery = "";
-        if (adapter != null) adapter.setNameQuery("");
-
-        // limpa tipo
-        currentTypeFilter = null;
-        if (adapter != null) adapter.setTypeFilter(null);
-
-        // fecha drawer e sobe a lista
-        if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
-        rv.scrollToPosition(0);
         hideKeyboard();
     }
 

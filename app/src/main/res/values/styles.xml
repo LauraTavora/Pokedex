@@ -22,6 +22,43 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="TextAppearance.Pokedex.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Pokedex.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <style name="ChipWhiteTranslucent">
+        <item name="android:background">@drawable/bg_chip_white_translucent</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <!-- Tema normal da app -->
+    <style name="Theme.Pokedex.Main" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+    </style>
+
+    <!-- Tema translúcido para a Splash (ela fica por cima da Main) -->
+    <style name="Theme.Pokedex.Splash.Translucent" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Janela transparente para ver a Main imediatamente -->
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
 
 </resources>
 

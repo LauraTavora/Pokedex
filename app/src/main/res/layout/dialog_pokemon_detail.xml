@@ -119,7 +119,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_marginTop="12dp"/>
 
-            <!-- ===== STATS (sem scroll, todos visíveis) ===== -->
+            <!-- ===== STATS (sem scroll) ===== -->
             <LinearLayout
                 android:id="@+id/groupStats"
                 android:orientation="vertical"
@@ -139,7 +139,7 @@
                 <include layout="@layout/row_stat_with_bar" android:id="@+id/row_sp_def"/>
                 <include layout="@layout/row_stat_with_bar" android:id="@+id/row_speed"/>
 
-                <!-- Loader opcional (fica invisível por padrão) -->
+                <!-- Loader opcional -->
                 <ProgressBar
                     android:id="@+id/abilitiesLoading"
                     style="?android:attr/progressBarStyleSmall"
@@ -150,7 +150,7 @@
                     android:layout_marginTop="6dp"/>
             </LinearLayout>
 
-            <!-- ===== HABILIDADES (também sem scroll) ===== -->
+            <!-- ===== HABILIDADES (sem scroll) ===== -->
             <LinearLayout
                 android:id="@+id/groupAbilities"
                 android:orientation="vertical"

@@ -17,4 +17,13 @@
     <string name="stat_sp_atk">Atq. Esp.</string>
     <string name="stat_sp_def">Def. Esp.</string>
     <string name="stat_speed">Velocidade</string>
+
+    <string name="escolha_seu_pokemon">Escolha seu Pokémon</string>
+
+    <string name="toque_para_atacar">Toque em qualquer lugar para atacar</string>
+    <string name="vitoria">Vitória!</string>
+    <string name="derrota">Derrota…</string>
+    <string name="empate">Empate</string>
+    <string name="tocar_para_sair">Toque em OK para sair</string>
+
 </resources>
